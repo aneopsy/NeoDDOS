@@ -76,7 +76,10 @@ def down_it(item):
             if s.sendto(packet, (host, int(port))):
                 s.shutdown(1)
                 i += 1
-                output = "\033[92m" + time.ctime(time.time()) + "\033[0m \033[94m[" + '*'*(i%30) + (' '*(30-(i%30))) +"]\033[92m " + host + ':' + str(port) + " -> " + str(i) + "\033[0m\r"
+                output = "\033[92m" + time.ctime(time.time()) + \
+                         "\033[0m \033[94m[" + '*' * (i % 30) + \
+                         (' ' * (30 - (i % 30))) + "]\033[92m " + host + \
+                         ':' + str(port) + " -> " + str(i) + "\033[0m\r"
                 sys.stdout.write(output)
                 sys.stdout.flush()
             else:
